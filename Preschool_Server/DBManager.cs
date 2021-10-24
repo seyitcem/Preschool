@@ -15,7 +15,6 @@ namespace Preschool_Server
     {
         static private string connectionString = "Data Source=SEYIT-PC;Initial Catalog=Preschool;Integrated Security=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
         static private SqlCommand sqlCommand;
-        static private SqlDataAdapter sqlDataAdapter;
         static private SqlDataReader sqlDataReader;
         static public void QueryGet(XElement message)
         {
@@ -33,7 +32,7 @@ namespace Preschool_Server
                 {
                     List<object> temp = new List<object>();
                     temp.Add(child.Name.ToString());
-                    temp.Add(ConvertTypeByColumnType(table_name, child.Name.ToString(),child.Value.ToString()));
+                    temp.Add(ConvertTypeByColumnType(table_name, child.Name.ToString(), child.Value.ToString()));
                     wheres.Add(temp);
                 }
             }
@@ -60,21 +59,31 @@ namespace Preschool_Server
                 }
             }
             Console.WriteLine("Received command: " + query);
-            query += " FOR XML AUTO";
             using (SqlConnection sqlConnection = new SqlConnection(connectionString))
             {
                 sqlConnection.Open();
                 sqlCommand = new SqlCommand(query, sqlConnection);
                 for (int i = 0; i < wheres.Count; i++)
                 {
-                    sqlCommand.Parameters.Add(new SqlParameter(wheres[i][0].ToString(),wheres[i][1]));
+                    sqlCommand.Parameters.Add(new SqlParameter(wheres[i][0].ToString(), wheres[i][1]));
                 }
-                /*XmlReader xml_reader = sqlCommand.ExecuteXmlReader();
-                DataSet dataSet = new DataSet();
-                dataSet.ReadXml(xml_reader,XmlReadMode.);
-                dataSet.DataSetName = "Test";
-                Console.WriteLine(dataSet.GetXml());*/
+                sqlDataReader = sqlCommand.ExecuteReader();
+                Console.WriteLine(ConvertToXML(sqlDataReader, table_name));
             }
+        }
+        static public XElement ConvertToXML(IDataReader reader, string table_name)
+        {
+            XElement resultNode = new XElement("RESULT");
+            while (reader.Read())
+            {
+                XElement row = new XElement(table_name);
+                for(int i = 0; i < reader.FieldCount; i++)
+                {
+                    row.Add(new XElement(reader.GetName(i), reader.GetValue(i)));
+                }
+                resultNode.Add(row);
+            }
+            return resultNode;
         }
         static public object ConvertTypeByColumnType(string table_name, string column_name, string value)
         {

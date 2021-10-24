@@ -58,6 +58,8 @@ namespace Preschool_Client
                                 sWriter.WriteLine(message_sent);
                                 sWriter.Flush();
                                 is_return_answer = false;
+                                /*TEMP*/is_process_continue = false;
+                                /*TEMP*/break;
                                 if (!is_return_answer)
                                 {
                                     while (!is_return_answer) ;

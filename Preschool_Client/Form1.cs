@@ -29,6 +29,8 @@ namespace Preschool_Client
         {
             XElement query = new XElement("GET",
                                     new XElement("SELECT",
+                                        new XElement("Element", "id"),
+                                        new XElement("Element", "name"),
                                         new XElement("Element", "price"),
                                         new XElement("Element", "amount")),
                                     new XElement("FROM",
