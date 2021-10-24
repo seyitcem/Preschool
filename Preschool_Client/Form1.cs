@@ -34,7 +34,9 @@ namespace Preschool_Client
                                         new XElement("Element", "price"),
                                         new XElement("Element", "amount")),
                                     new XElement("FROM",
-                                        new XElement("Table_Name", "Products"))
+                                        new XElement("Table_Name", "Products")),
+                                    new XElement("WHERE",
+                                        new XElement("id","11"))
             );
             SendNewMessage(StringToHexString(query.ToString()));
         }

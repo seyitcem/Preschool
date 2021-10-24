@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using static Preschool_Server.XMLHelper;
 
 namespace Preschool_Server
 {
@@ -21,25 +22,7 @@ namespace Preschool_Server
             List<string> selects = new List<string>();
             List<List<object>> wheres = new List<List<object>>();
             string table_name = null;
-            try
-            {
-                foreach (XElement child in message.Descendants("SELECT").Elements())
-                {
-                    selects.Add(child.Value);
-                }
-                table_name = message.Descendants("FROM").Elements().ElementAt(0).Value;
-                foreach (XElement child in message.Descendants("WHERE").Elements())
-                {
-                    List<object> temp = new List<object>();
-                    temp.Add(child.Name.ToString());
-                    temp.Add(ConvertTypeByColumnType(table_name, child.Name.ToString(), child.Value.ToString()));
-                    wheres.Add(temp);
-                }
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("PARSING ERROR.");
-            }
+            GetQueryTokensFromXML(message,ref table_name,ref selects,ref wheres);
             string query = "SELECT ";
             foreach (string select in selects)
             {
@@ -71,24 +54,9 @@ namespace Preschool_Server
                 Console.WriteLine(ConvertToXML(sqlDataReader, table_name));
             }
         }
-        static public XElement ConvertToXML(IDataReader reader, string table_name)
-        {
-            XElement resultNode = new XElement("RESULT");
-            while (reader.Read())
-            {
-                XElement row = new XElement(table_name);
-                for(int i = 0; i < reader.FieldCount; i++)
-                {
-                    row.Add(new XElement(reader.GetName(i), reader.GetValue(i)));
-                }
-                resultNode.Add(row);
-            }
-            return resultNode;
-        }
         static public object ConvertTypeByColumnType(string table_name, string column_name, string value)
         {
             object return_val = null;
-
             using (SqlConnection sqlConnection = new SqlConnection(connectionString))
             {
                 sqlConnection.Open();
@@ -122,7 +90,6 @@ namespace Preschool_Server
                     }
                 }
             }
-
             return return_val;
         }
     }
