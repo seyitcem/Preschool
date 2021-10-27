@@ -13,6 +13,7 @@ using System.Xml;
 using System.Xml.Linq;
 using static Preschool_Server.Transform;
 using static Preschool_Server.DBManager;
+using static Preschool_Server.XMLHelper;
 
 namespace Preschool_Server
 {
@@ -41,7 +42,6 @@ namespace Preschool_Server
 
             Console.WriteLine("A client is connected.");
             Console.WriteLine("Active number of connection is: " + tcpClientsList.Count + "\n");
-
             while (true)
             {
                 try
@@ -55,13 +55,14 @@ namespace Preschool_Server
                     else
                     {
                         message = XElement.Parse(HexStringToString(encoded_message));
+                        XElement result = null;
                         if (message.Name == "GET")
                         {
-                            QueryGet(message);
+                            result = QueryGet(message);
                         }
                         else if (message.Name == "UPDATE")
                         {
-
+                            result = QueryUpdate(message);
                         }
                         else if (message.Name == "DELETE")
                         {
@@ -73,48 +74,10 @@ namespace Preschool_Server
                         }
                         else
                         {
-                            Console.WriteLine("Error");
+                            result = ErrorMessage();
                         }
+                        TCPServerSender(result, tcpClient);
                     }
-                    /*
-                    using (SqlConnection sqlConnection = new SqlConnection(connectionString))
-                    {
-                        sqlConnection.Open();
-                        string query = "Select * from Products";
-                        sqlCommand = new SqlCommand(query, sqlConnection);
-                        sqlDataReader = sqlCommand.ExecuteReader();
-                        XElement resultNode = new XElement("Result");
-                        if (sqlDataReader.HasRows)
-                        {
-                            while (sqlDataReader.Read())
-                            {
-                                XElement row = new XElement("Product");
-                                for (int i = 0; i < sqlDataReader.FieldCount; i++)
-                                {
-                                    row.Add(new XElement(sqlDataReader.GetName(i), sqlDataReader.GetValue(i)));
-                                }
-                                resultNode.Add(row);
-                            }
-                            Console.WriteLine(resultNode.ToString());
-                        }
-                    }
-                    using (SqlConnection sqlConnection = new SqlConnection(connectionString))
-                    {
-                        sqlConnection.Open();
-                        string query = "Select * from Products";
-                        DataSet dataSet = new DataSet();
-                        sqlCommand = new SqlCommand(query, sqlConnection);
-                        sqlDataAdapter = new SqlDataAdapter(sqlCommand);
-                        sqlDataAdapter.Fill(dataSet);
-                        dataSet.DataSetName = "Results";
-                        dataSet.Tables[0].TableName = "Product";
-                        using (var writer = new StringWriter())
-                        {
-                            dataSet.WriteXml(writer);
-                            Console.WriteLine(writer.ToString());
-                        }
-                    }
-                    */
                 }
                 catch (IOException)
                 {
@@ -126,11 +89,11 @@ namespace Preschool_Server
                 }
             }
         }
-        static public void TCPServerSender(string message, TcpClient client)
+        static public void TCPServerSender(XElement message, TcpClient client)
         {
             StreamWriter sWriter = new StreamWriter(client.GetStream());
-            Console.WriteLine("Sent message: " + message + "\n");
-            sWriter.WriteLine(message);
+            Console.WriteLine("Sent message\n" + message.ToString() + "\n");
+            sWriter.WriteLine(StringToHexString(message.ToString()));
             sWriter.Flush();
         }
     }

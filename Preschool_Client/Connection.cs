@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
+using static Preschool_Client.Transform;
 
 namespace Preschool_Client
 {
@@ -19,13 +21,13 @@ namespace Preschool_Client
         static public bool is_return_answer = false;
         static public bool is_process_continue = false;
         static public Queue<string> UDP_commands = new Queue<string>();
-        static public void SendNewMessage(string msg)
+        static public void SendNewMessage(XElement msg)
         {
             if (is_process_continue)
             {
                 while (is_process_continue) ;
             }
-            message_sent = msg;
+            message_sent = msg.ToString();
             is_process_continue = true;
             if (is_process_continue)
             {
@@ -55,17 +57,15 @@ namespace Preschool_Client
                         {
                             if (is_process_continue)
                             {
-                                sWriter.WriteLine(message_sent);
+                                sWriter.WriteLine(StringToHexString(message_sent.ToString()));
                                 sWriter.Flush();
                                 is_return_answer = false;
-                                /*TEMP*/is_process_continue = false;
-                                /*TEMP*/break;
                                 if (!is_return_answer)
                                 {
                                     while (!is_return_answer) ;
                                 }
-                                Console.WriteLine("Sent message: " + message_sent);
-                                Console.WriteLine("Received message: " + message_received + "\n");
+                                Console.WriteLine("Sent message\n" + message_sent);
+                                Console.WriteLine("Received message\n" + HexStringToString(message_received) + "\n");
                                 is_process_continue = false;
                             }
                         }

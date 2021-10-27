@@ -17,12 +17,12 @@ namespace Preschool_Server
         static private string connectionString = "Data Source=SEYIT-PC;Initial Catalog=Preschool;Integrated Security=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
         static private SqlCommand sqlCommand;
         static private SqlDataReader sqlDataReader;
-        static public void QueryGet(XElement message)
+        static public XElement QueryGet(XElement message)
         {
             List<string> selects = new List<string>();
             List<List<object>> wheres = new List<List<object>>();
             string table_name = null;
-            GetQueryTokensFromXML(message,ref table_name,ref selects,ref wheres);
+            QueryGetTokensFromXML(message, ref table_name, ref selects, ref wheres);
             string query = "SELECT ";
             foreach (string select in selects)
             {
@@ -51,7 +51,56 @@ namespace Preschool_Server
                     sqlCommand.Parameters.Add(new SqlParameter(wheres[i][0].ToString(), wheres[i][1]));
                 }
                 sqlDataReader = sqlCommand.ExecuteReader();
-                Console.WriteLine(ConvertToXML(sqlDataReader, table_name));
+                return ConvertToXML(sqlDataReader, table_name);
+            }
+        }
+        static public XElement QueryUpdate(XElement message)
+        {
+            string table_name = null;
+            List<List<object>> sets = new List<List<object>>();
+            List<List<object>> wheres = new List<List<object>>();
+            Console.WriteLine(message.ToString());
+            QueryUpdateTokensFromXML(message, ref table_name, ref sets, ref wheres);
+            string query = "UPDATE " + table_name + " SET ";
+            for(int i = 0; i < sets.Count; i++)
+            {
+                query += sets[i][0] + " = @" + sets[i][0] + ",";
+            }
+            query = query.TrimEnd(',');
+            if (wheres.Count != 0)
+            {
+                query += " WHERE ";
+                for (int i = 0; i < wheres.Count; i++)
+                {
+                    query += wheres[i][0] + " = @" + wheres[i][0];
+                    if (i + 1 != wheres.Count)
+                    {
+                        query += " AND ";
+                    }
+                }
+            }
+            Console.WriteLine("Received command: " + query);
+            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            {
+                sqlConnection.Open();
+                sqlCommand = new SqlCommand(query, sqlConnection);
+                for (int i = 0; i < sets.Count; i++)
+                {
+                    sqlCommand.Parameters.Add(new SqlParameter(sets[i][0].ToString(), sets[i][1]));
+                }
+                for (int i = 0; i < wheres.Count; i++)
+                {
+                    sqlCommand.Parameters.Add(new SqlParameter(wheres[i][0].ToString(), wheres[i][1]));
+                }
+                int result = sqlCommand.ExecuteNonQuery();
+                if(result == 1)
+                {
+                    return SuccessfulMessage();
+                }
+                else
+                {
+                    return ErrorMessage();
+                }
             }
         }
         static public object ConvertTypeByColumnType(string table_name, string column_name, string value)

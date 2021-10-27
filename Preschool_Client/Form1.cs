@@ -27,18 +27,27 @@ namespace Preschool_Client
 
         private void button1_Click(object sender, EventArgs e)
         {
-            XElement query = new XElement("GET",
+            /*XElement query = new XElement("GET",
                                     new XElement("SELECT",
                                         new XElement("Element", "id"),
                                         new XElement("Element", "name"),
                                         new XElement("Element", "price"),
                                         new XElement("Element", "amount")),
                                     new XElement("FROM",
-                                        new XElement("Table_Name", "Products")),
+                                        new XElement("Table_Name", "Products")));
+            */
+            XElement query = new XElement("UPDATE",
+                                    new XElement("TABLE_NAME", "Products"),
+                                    new XElement("SET",
+                                        new XElement("name", "simit")),
                                     new XElement("WHERE",
-                                        new XElement("id","11"))
-            );
-            SendNewMessage(StringToHexString(query.ToString()));
+                                        new XElement("id", "14")));
+            SendNewMessage(query);
+        }
+
+        private void Exit_Button_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }
