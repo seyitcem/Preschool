@@ -21,7 +21,40 @@ namespace Preschool_Client
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            // Resizability needs
+            this.DoubleBuffered = true;
+            this.SetStyle(ControlStyles.ResizeRedraw, true);
+            //
+        }
 
+        private const int cGrip = 16;      // Grip size
+
+        protected override void OnPaint(PaintEventArgs e)   // Used for drawing resize mark.
+        {
+            if(WindowState != FormWindowState.Maximized)
+            {
+                Rectangle rc = new Rectangle(this.ClientSize.Width - cGrip, this.ClientSize.Height - cGrip, cGrip, cGrip);
+                ControlPaint.DrawSizeGrip(e.Graphics, this.BackColor, rc);
+            }
+        }
+        protected override void WndProc(ref Message m)  // It provides form resizability.
+        {
+            if (m.Msg == 0x84 && WindowState != FormWindowState.Maximized)
+            {   
+                Point pos = new Point(m.LParam.ToInt32());
+                pos = this.PointToClient(pos);
+                if (pos.X >= this.ClientSize.Width - cGrip && pos.Y >= this.ClientSize.Height - cGrip)
+                {
+                    m.Result = (IntPtr)17;
+                    return;
+                }
+                else
+                {
+                    m.Result = (IntPtr)2;
+                    return;
+                }
+            }
+            base.WndProc(ref m);
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -61,6 +94,24 @@ namespace Preschool_Client
         private void Exit_Button_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void Minimize_Button_Click(object sender, EventArgs e)
+        {
+            WindowState = FormWindowState.Minimized;
+        }
+
+        private void Maximize_Normal_Button_Click(object sender, EventArgs e)
+        {
+            if(WindowState != FormWindowState.Maximized)
+            {
+                MaximizedBounds = Screen.FromHandle(Handle).WorkingArea; // Avoids covering of the taskbar.
+                WindowState = FormWindowState.Maximized;
+            }
+            else
+            {
+                WindowState = FormWindowState.Normal;
+            }
         }
     }
 }
