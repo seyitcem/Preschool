@@ -66,11 +66,11 @@ namespace Preschool_Server
                         }
                         else if (message.Name == "DELETE")
                         {
-
+                            result = QueryDelete(message);
                         }
                         else if (message.Name == "INSERT")
                         {
-
+                            result = QueryInsert(message);
                         }
                         else
                         {

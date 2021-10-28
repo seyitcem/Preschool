@@ -59,10 +59,9 @@ namespace Preschool_Server
             string table_name = null;
             List<List<object>> sets = new List<List<object>>();
             List<List<object>> wheres = new List<List<object>>();
-            Console.WriteLine(message.ToString());
             QueryUpdateTokensFromXML(message, ref table_name, ref sets, ref wheres);
             string query = "UPDATE " + table_name + " SET ";
-            for(int i = 0; i < sets.Count; i++)
+            for (int i = 0; i < sets.Count; i++)
             {
                 query += sets[i][0] + " = @" + sets[i][0] + ",";
             }
@@ -93,7 +92,81 @@ namespace Preschool_Server
                     sqlCommand.Parameters.Add(new SqlParameter(wheres[i][0].ToString(), wheres[i][1]));
                 }
                 int result = sqlCommand.ExecuteNonQuery();
-                if(result == 1)
+                if (result == 1)
+                {
+                    return SuccessfulMessage();
+                }
+                else
+                {
+                    return ErrorMessage();
+                }
+            }
+        }
+        static public XElement QueryInsert(XElement message)
+        {
+            string table_name = null;
+            List<List<object>> values = new List<List<object>>();
+            QueryInsertTokensFromXML(message, ref table_name, ref values);
+            string query = "INSERT INTO " + table_name + " (";
+            for(int i = 0; i < values.Count; i++)
+            {
+                query += values[i][0] + ",";
+            }
+            query = query.TrimEnd(',') + ") VALUES (";
+            for(int i = 0; i < values.Count; i++)
+            {
+                query += "@" + values[i][0] + ",";
+            }
+            query = query.TrimEnd(',') + ")";
+            Console.WriteLine("Received command: " + query);
+            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            {
+                sqlConnection.Open();
+                sqlCommand = new SqlCommand(query, sqlConnection);
+                for (int i = 0; i < values.Count; i++)
+                {
+                    sqlCommand.Parameters.Add(new SqlParameter(values[i][0].ToString(), values[i][1]));
+                }
+                int result = sqlCommand.ExecuteNonQuery();
+                if (result == 1)
+                {
+                    return SuccessfulMessage();
+                }
+                else
+                {
+                    return ErrorMessage();
+                }
+            }
+        }
+        static public XElement QueryDelete(XElement message)
+        {
+            string table_name = null;
+            List<List<object>> wheres = new List<List<object>>();
+            QueryDeleteTokensFromXML(message, ref table_name, ref wheres);
+            string query = "DELETE FROM " + table_name;
+            if(wheres.Count != 0)
+            {
+                query += " WHERE ";
+                for (int i = 0; i < wheres.Count; i++)
+                {
+                    query += wheres[i][0] + " = @" + wheres[i][0];
+                    if (i + 1 != wheres.Count)
+                    {
+                        query += " AND ";
+                    }
+                }
+            }
+            Console.WriteLine("Received command: " + query);
+            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            {
+                sqlConnection.Open();
+                sqlCommand = new SqlCommand(query, sqlConnection);
+                for (int i = 0; i < wheres.Count; i++)
+                {
+                    sqlCommand.Parameters.Add(new SqlParameter(wheres[i][0].ToString(), wheres[i][1]));
+                }
+                int result = sqlCommand.ExecuteNonQuery();
+                if (result == 1)
                 {
                     return SuccessfulMessage();
                 }
