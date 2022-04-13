@@ -14,83 +14,27 @@ namespace Preschool_Server
 {
     static class DBManager
     {
-        static private string connectionString = "Data Source=SEYIT-PC;Initial Catalog=Preschool;Integrated Security=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        static private string connectionString = "Data Source=DESKTOP-PF4Q263;Initial Catalog=DB;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
         static private SqlCommand sqlCommand;
         static private SqlDataReader sqlDataReader;
-        static public XElement QueryGet(XElement message)
+        static public string QuerySelect(string query)
         {
-            List<string> selects = new List<string>();
-            List<List<object>> wheres = new List<List<object>>();
-            string table_name = null;
-            QueryGetTokensFromXML(message, ref table_name, ref selects, ref wheres);
-            string query = "SELECT ";
-            foreach (string select in selects)
-            {
-                query += select + ",";
-            }
-            query = query.TrimEnd(',') + " FROM " + table_name;
-            if (wheres.Count != 0)
-            {
-                query += " WHERE ";
-                for (int i = 0; i < wheres.Count; i++)
-                {
-                    query += wheres[i][0] + " = @" + wheres[i][0];
-                    if (i + 1 != wheres.Count)
-                    {
-                        query += " AND ";
-                    }
-                }
-            }
             Console.WriteLine("Received command: " + query);
             using (SqlConnection sqlConnection = new SqlConnection(connectionString))
             {
                 sqlConnection.Open();
                 sqlCommand = new SqlCommand(query, sqlConnection);
-                for (int i = 0; i < wheres.Count; i++)
-                {
-                    sqlCommand.Parameters.Add(new SqlParameter(wheres[i][0].ToString(), wheres[i][1]));
-                }
                 sqlDataReader = sqlCommand.ExecuteReader();
-                return ConvertToXML(sqlDataReader, table_name);
+                return ConvertToXML(sqlDataReader, "RESULT").ToString();
             }
         }
-        static public XElement QueryUpdate(XElement message)
+        static public string QueryUpdate(string query)
         {
-            string table_name = null;
-            List<List<object>> sets = new List<List<object>>();
-            List<List<object>> wheres = new List<List<object>>();
-            QueryUpdateTokensFromXML(message, ref table_name, ref sets, ref wheres);
-            string query = "UPDATE " + table_name + " SET ";
-            for (int i = 0; i < sets.Count; i++)
-            {
-                query += sets[i][0] + " = @" + sets[i][0] + ",";
-            }
-            query = query.TrimEnd(',');
-            if (wheres.Count != 0)
-            {
-                query += " WHERE ";
-                for (int i = 0; i < wheres.Count; i++)
-                {
-                    query += wheres[i][0] + " = @" + wheres[i][0];
-                    if (i + 1 != wheres.Count)
-                    {
-                        query += " AND ";
-                    }
-                }
-            }
             Console.WriteLine("Received command: " + query);
             using (SqlConnection sqlConnection = new SqlConnection(connectionString))
             {
                 sqlConnection.Open();
                 sqlCommand = new SqlCommand(query, sqlConnection);
-                for (int i = 0; i < sets.Count; i++)
-                {
-                    sqlCommand.Parameters.Add(new SqlParameter(sets[i][0].ToString(), sets[i][1]));
-                }
-                for (int i = 0; i < wheres.Count; i++)
-                {
-                    sqlCommand.Parameters.Add(new SqlParameter(wheres[i][0].ToString(), wheres[i][1]));
-                }
                 int result = sqlCommand.ExecuteNonQuery();
                 if (result == 1)
                 {
@@ -102,31 +46,13 @@ namespace Preschool_Server
                 }
             }
         }
-        static public XElement QueryInsert(XElement message)
+        static public string QueryInsert(string query)
         {
-            string table_name = null;
-            List<List<object>> values = new List<List<object>>();
-            QueryInsertTokensFromXML(message, ref table_name, ref values);
-            string query = "INSERT INTO " + table_name + " (";
-            for(int i = 0; i < values.Count; i++)
-            {
-                query += values[i][0] + ",";
-            }
-            query = query.TrimEnd(',') + ") VALUES (";
-            for(int i = 0; i < values.Count; i++)
-            {
-                query += "@" + values[i][0] + ",";
-            }
-            query = query.TrimEnd(',') + ")";
             Console.WriteLine("Received command: " + query);
             using (SqlConnection sqlConnection = new SqlConnection(connectionString))
             {
                 sqlConnection.Open();
                 sqlCommand = new SqlCommand(query, sqlConnection);
-                for (int i = 0; i < values.Count; i++)
-                {
-                    sqlCommand.Parameters.Add(new SqlParameter(values[i][0].ToString(), values[i][1]));
-                }
                 int result = sqlCommand.ExecuteNonQuery();
                 if (result == 1)
                 {
@@ -138,33 +64,13 @@ namespace Preschool_Server
                 }
             }
         }
-        static public XElement QueryDelete(XElement message)
+        static public string QueryDelete(string query)
         {
-            string table_name = null;
-            List<List<object>> wheres = new List<List<object>>();
-            QueryDeleteTokensFromXML(message, ref table_name, ref wheres);
-            string query = "DELETE FROM " + table_name;
-            if(wheres.Count != 0)
-            {
-                query += " WHERE ";
-                for (int i = 0; i < wheres.Count; i++)
-                {
-                    query += wheres[i][0] + " = @" + wheres[i][0];
-                    if (i + 1 != wheres.Count)
-                    {
-                        query += " AND ";
-                    }
-                }
-            }
             Console.WriteLine("Received command: " + query);
             using (SqlConnection sqlConnection = new SqlConnection(connectionString))
             {
                 sqlConnection.Open();
                 sqlCommand = new SqlCommand(query, sqlConnection);
-                for (int i = 0; i < wheres.Count; i++)
-                {
-                    sqlCommand.Parameters.Add(new SqlParameter(wheres[i][0].ToString(), wheres[i][1]));
-                }
                 int result = sqlCommand.ExecuteNonQuery();
                 if (result == 1)
                 {
@@ -213,6 +119,138 @@ namespace Preschool_Server
                 }
             }
             return return_val;
+        }
+        static public List<string> GetCreateTableQueries()
+        {
+            List<string> queries = new List<string>();
+            queries.Add(
+              @"CREATE TABLE [dbo].[Employee]
+                (
+                    [id] INT NOT NULL PRIMARY KEY IDENTITY,
+                    [name] NVARCHAR(50) NOT NULL,
+                    [surname] NVARCHAR(50) NOT NULL,
+                    [TCNo] CHAR(11) NOT NULL,
+                    [salary] FLOAT NULL, 
+                    [phone_number] NVARCHAR(25) NULL
+                )");
+            queries.Add(
+              @"CREATE TABLE [dbo].[Class]
+                (
+                    [id] INT NOT NULL PRIMARY KEY IDENTITY,
+                    [name] VARCHAR(50) NOT NULL
+                )");
+            queries.Add(
+              @"CREATE TABLE [dbo].[Teacher]
+                (
+	                [id] INT NOT NULL PRIMARY KEY IDENTITY, 
+                    [employee_id] INT NOT NULL, 
+                    [full_time_flag] BIT NULL, 
+                    [part_time_flag] BIT NULL, 
+                    [field] NVARCHAR(50) NULL, 
+                    [class_id] INT NULL,
+	                CONSTRAINT Teacher_FK_EmpId FOREIGN KEY(employee_id) REFERENCES Employee(id),
+	                CONSTRAINT Teacher_FK_ClsId FOREIGN KEY(class_id) REFERENCES Class(id)
+                )");
+            queries.Add(
+              @"CREATE TABLE [dbo].[Student]
+                (
+	                [id] INT NOT NULL PRIMARY KEY IDENTITY, 
+                    [name] NVARCHAR(50) NOT NULL, 
+                    [surname] NVARCHAR(50) NOT NULL, 
+                    [TCNo] CHAR(11) NOT NULL, 
+                    [parent_name] NVARCHAR(50) NOT NULL, 
+                    [phone_number] NVARCHAR(50) NOT NULL, 
+                    [class_id] INT NULL,
+	                CONSTRAINT Student_FK_ClsId FOREIGN KEY(class_id) REFERENCES Class(id)
+                )");
+            queries.Add(
+              @"CREATE TABLE [dbo].[Bill]
+                (
+	                [id] INT NOT NULL PRIMARY KEY IDENTITY, 
+                    [bill_id] NVARCHAR(50) NOT NULL, 
+                    [date] DATE NOT NULL, 
+                    [amount] FLOAT NOT NULL, 
+                    [period] NVARCHAR(50) NOT NULL, 
+                    [student_id] INT NOT NULL,
+	                CONSTRAINT Bill_FK_StuId FOREIGN KEY(student_id) REFERENCES Student(id)
+                )");
+            queries.Add(
+              @"CREATE TABLE [dbo].[Worker]
+                (
+	                [id] INT NOT NULL PRIMARY KEY IDENTITY, 
+                    [employee_id] INT NOT NULL,
+	                CONSTRAINT Worker_FK_EmpId FOREIGN KEY(employee_id) REFERENCES Employee(id)
+                )");
+            queries.Add(
+              @"CREATE TABLE [dbo].[Manager]
+                (
+	                [id] INT NOT NULL PRIMARY KEY IDENTITY, 
+                    [employee_id] INT NOT NULL,
+	                CONSTRAINT Manager_FK_EmpId FOREIGN KEY(employee_id) REFERENCES Employee(id)
+                )");
+            queries.Add(
+              @"CREATE TABLE [dbo].[Expense]
+                (
+	                [id] INT NOT NULL PRIMARY KEY IDENTITY, 
+                    [worker_id] INT NOT NULL, 
+                    [amount] FLOAT NOT NULL, 
+                    [date] DATE NOT NULL,
+	                CONSTRAINT Expense_FK_WorkerId FOREIGN KEY(worker_id) REFERENCES Worker(id)
+                )");
+            queries.Add(
+              @"CREATE TABLE [dbo].[HealthInfo]
+                (
+	                [id] INT NOT NULL PRIMARY KEY IDENTITY, 
+                    [student_id] INT NOT NULL, 
+                    [period] NVARCHAR(50) NOT NULL, 
+                    [height] FLOAT NOT NULL, 
+                    [weight] FLOAT NOT NULL,
+	                CONSTRAINT HealthInfo_FK_StuId FOREIGN KEY(student_id) REFERENCES Student(id)
+                )");
+            queries.Add(
+              @"CREATE TABLE [dbo].[Activity]
+                (
+	                [id] INT NOT NULL PRIMARY KEY IDENTITY, 
+                    [name] NVARCHAR(50) NOT NULL
+                )
+                ");
+            queries.Add(
+              @"CREATE TABLE [dbo].[Performance]
+                (
+	                [id] INT NOT NULL PRIMARY KEY IDENTITY, 
+                    [activity_id] INT NOT NULL, 
+                    [student_id] INT NOT NULL, 
+                    [date] DATE NOT NULL, 
+                    [point] INT NULL,
+	                CONSTRAINT Performance_FK_ActivityId FOREIGN KEY(activity_id) REFERENCES Activity(id),
+	                CONSTRAINT Performance_FK_StuId FOREIGN KEY(student_id) REFERENCES Student(id)
+                )");
+            return queries;
+        }
+
+        static public void InitializeTables()
+        {
+            List<string> queries = GetCreateTableQueries();
+
+            for (int i = 0; i < queries.Count; i++)
+            {
+                try
+                {
+                    using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+                    {
+                        sqlConnection.Open();
+                        sqlCommand = new SqlCommand(queries[i], sqlConnection);
+                        sqlCommand.ExecuteNonQuery();
+                        string table_name = queries[i].Substring(19);
+                        table_name = table_name.Substring(0, table_name.IndexOf(']') + 1);
+                        Console.WriteLine(table_name + " table is created.");
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
         }
     }
 }

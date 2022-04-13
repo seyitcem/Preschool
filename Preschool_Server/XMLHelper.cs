@@ -108,13 +108,13 @@ namespace Preschool_Server
             }
             return resultNode;
         }
-        static public XElement ErrorMessage()
+        static public string ErrorMessage()
         {
-            return new XElement("RESULT", "ERROR");
+            return "ERROR";
         }
-        static public XElement SuccessfulMessage()
+        static public string SuccessfulMessage()
         {
-            return new XElement("RESULT", "SUCCESSFUL");
+            return "SUCCESSFUL";
         }
     }
 }

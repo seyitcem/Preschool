@@ -23,6 +23,7 @@ namespace Preschool_Server
         static private List<TcpClient> tcpClientsList = new List<TcpClient>();
         static void Main(string[] args)
         {
+            InitializeTables();
             tcpListener.Start();
             Console.WriteLine("Server is started." + "\n");
 
@@ -46,29 +47,28 @@ namespace Preschool_Server
             {
                 try
                 {
-                    string encoded_message = reader.ReadLine();
-                    XElement message;
-                    if (encoded_message == null)
+                    string message = HexStringToString(reader.ReadLine());
+                    string process = message.Split(' ')[0];
+                    string result;
+                    if (message == null)
                     {
                         throw new IOException();
                     }
                     else
                     {
-                        message = XElement.Parse(HexStringToString(encoded_message));
-                        XElement result = null;
-                        if (message.Name == "GET")
+                        if (process == "SELECT")
                         {
-                            result = QueryGet(message);
+                            result = QuerySelect(message);
                         }
-                        else if (message.Name == "UPDATE")
+                        else if (process == "UPDATE")
                         {
                             result = QueryUpdate(message);
                         }
-                        else if (message.Name == "DELETE")
+                        else if (process == "DELETE")
                         {
                             result = QueryDelete(message);
                         }
-                        else if (message.Name == "INSERT")
+                        else if (process == "INSERT")
                         {
                             result = QueryInsert(message);
                         }
@@ -89,7 +89,7 @@ namespace Preschool_Server
                 }
             }
         }
-        static public void TCPServerSender(XElement message, TcpClient client)
+        static public void TCPServerSender(string message, TcpClient client)
         {
             StreamWriter sWriter = new StreamWriter(client.GetStream());
             Console.WriteLine("Sent message\n" + message.ToString() + "\n");

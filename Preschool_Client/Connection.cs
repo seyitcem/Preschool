@@ -21,13 +21,13 @@ namespace Preschool_Client
         static public bool is_return_answer = false;
         static public bool is_process_continue = false;
         static public Queue<string> UDP_commands = new Queue<string>();
-        static public void SendNewMessage(XElement msg)
+        static public void SendNewMessage(string msg)
         {
             if (is_process_continue)
             {
                 while (is_process_continue) ;
             }
-            message_sent = msg.ToString();
+            message_sent = msg;
             is_process_continue = true;
             if (is_process_continue)
             {
